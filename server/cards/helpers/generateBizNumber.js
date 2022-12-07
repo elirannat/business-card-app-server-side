@@ -16,4 +16,19 @@ const generateBizNumber = async () => {
   }
 };
 
-module.exports = generateBizNumber;
+const generateBizNumberFromAdmin = async (number) => {
+  try {
+    const card = await Card.findOne(
+      { bizNumber: number },
+      { bizNumber: 1, _id: 1 }
+    );
+    if (card)
+      throw new Error("Authorization Error: We are sorry but this number is busy");
+    return number;
+  } catch (error) {
+    handleBadRequest("generatBizNumber", error);
+  }
+};
+
+exports.generateBizNumber = generateBizNumber;
+exports.generateBizNumberFromAdmin = generateBizNumberFromAdmin;
