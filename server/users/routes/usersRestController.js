@@ -15,9 +15,11 @@ const {
 
 const {
   validateRegistration,
-  validateLogin
+  validateLogin,
+  validateUserUpdate
 } = require("../validations/userValidationService");
 const router = express.Router();
+const { verifyToken } = require('../../auth/providers/jwt')
 
 
 router.post("/", async (req, res) => {
@@ -68,10 +70,10 @@ router.get("/", auth, async (req, res) => {
 });
 
 router.get("/:id", auth, async (req, res) => {
+  const id = req.params.id;
   try {
-    const { id } = req.params;
-    const { _id, isAdmin } = req.user;
-    if (_id !== id && !isAdmin)
+    const verifiedUser = verifyToken(req.headers['x-auth-token']);
+    if (!req.user.isAdmin && (id != verifiedUser._id))
       return handleError(
         res,
         403,
@@ -89,8 +91,12 @@ router.put("/:id", auth, async (req, res) => {
   try {
     const rawUser = req.body;
     const { userId } = req.params;
-    const { _id } = req.user
-    if (_id !== userId)
+
+    const { error } = validateUserUpdate(user);
+    if (error) return handleError(res, 400, `Joi Error: ${error.details[0].message}`);
+
+    const verifiedUser = verifyAuthToken(req.headers['x-auth-token']);
+    if (!rawUser.isAdmin && (userId != verifiedUser._id))
       return handleError(
         res,
         403,
@@ -108,9 +114,9 @@ router.put("/:id", auth, async (req, res) => {
 
 router.patch("/:id", auth, async (req, res) => {
   try {
-    const { _id } = req.user;
     let { id } = req.params;
-    if (_id !== id && !req.user.isAdmin)
+    const verifiedUser = verifyAuthToken(req.headers['x-auth-token']);
+    if (!req.user.isAdmin && (id != verifiedUser._id))
       return handleError(
         res,
         403,
@@ -125,9 +131,9 @@ router.patch("/:id", auth, async (req, res) => {
 
 router.delete("/:id", auth, async (req, res) => {
   try {
-    const { _id } = req.user;
     let { id } = req.params;
-    if (_id !== id && !req.user.isAdmin)
+    const verifiedUser = verifyAuthToken(req.headers['x-auth-token']);
+    if (!req.user.isAdmin && (id != verifiedUser._id))
       return handleError(
         res,
         403,
