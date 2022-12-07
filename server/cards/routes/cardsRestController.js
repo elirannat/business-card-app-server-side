@@ -13,6 +13,7 @@ const {
 } = require("../models/cardsAccessDataService");
 const validateCard = require("../validations/cardValidationService");
 const router = express.Router();
+const { generateBizNumberFromAdmin } = require("../helpers/generateBizNumber");
 
 router.get("/", async (req, res) => {
   try {
@@ -90,6 +91,33 @@ router.patch("/:id", auth, async (req, res) => {
     const userId = req.user._id;
     const card = await likeCard(cardId, userId);
     return res.send(card);
+  } catch (error) {
+    return handleError(res, error.status || 500, error.message);
+  }
+});
+
+router.patch("/number/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+    const { isAdmin } = user;
+    if (!isAdmin)
+      return handelError(
+        res,
+        403,
+        "Authorization Error: You must be an isAdmin type user for create number"
+      );
+
+    const bizNumber = await generateBizNumberFromAdmin(189918);
+    if (!bizNumber)
+      return handelError(
+        res,
+        403,
+        "Authorization Error: We are sorry but this number is busy"
+      );
+    const cardUpdate = await Card.findByIdAndUpdate(
+      id, { bizNumber: bizNumber }, { new: true });
+    return res.send(cardUpdate);
   } catch (error) {
     return handleError(res, error.status || 500, error.message);
   }
