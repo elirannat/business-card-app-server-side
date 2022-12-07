@@ -41,7 +41,7 @@ const loginUser = async ({ email, password }) => {
         const token = generateAuthToken(user);
         return Promise.resolve(token);
       } else {
-        setTimeout(() => (wrongPass = 0), 1000 * 60 * 60 * 24);
+        setTimeout(() => (wrongPass = 0), 3600 * 1000 * 24);
         throw new Error("You are blocked for 24 hours, try again tomorrow");
       }
     } catch (error) {
